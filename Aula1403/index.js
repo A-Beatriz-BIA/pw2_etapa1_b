@@ -30,7 +30,8 @@ function operation()
         const action = answer['action']
 
         if(action ==='Criar Conta'){
-            console.log('Criando a conta...')     
+            console.log('Criando a conta...') 
+            createAccount() // Chama a função para criar a conta já criada lá embaixo    
         }
 
         else if(action === 'Consultar Saldo'){
@@ -57,3 +58,51 @@ function operation()
 
 //#endregion
 
+//#region Criar Contas
+
+function createAccount(){
+
+    console.log(chalk.bgGreen.black('Bem vindo ao Contas ETEC Bank!'))
+    console.log(chalk.green('Siga as orientações a seguir:'))
+
+    buildAccount()
+}
+
+function buildAccount(){
+
+    inquirer.prompt([
+        {
+            name: 'accountName',
+            message: 'Entre com o nome da conta:'
+        }
+    ]).then((answer) => {
+        const accountName = answer['accountName'] //sync porque a promiss é sincrona
+
+        if(!fs.existsSync('accounts')){  //Verifica se não existe
+            fs.mkdirSync('accounts')
+        }
+    
+        if(fs.existsSync(`accounts/${accountName}.json`)){
+            console.log(chalk.bgRed.black('Esta conta já existe!'))
+            buildAccount(accountName) // recursividade, ou seja, chama a função dentro da própria função. Nesse caso, vai retornar pra função build
+        } 
+        
+        // polimorfia: ato que pode modificar o metodo mandando um parametro pra ele que exista no contexto geral.
+        
+        // função de erro
+        fs.writeFileSync(
+            `accounts/${accountName}.json`,
+            '{"balance":0}',
+            function (err){
+                console.error(err)
+            }
+
+        )
+         //Informa se a opração de criar a conta deu certo
+
+        console.info(chalk.green('Parabéns! Sua conta no ETEC Bank foi criada.'))
+        operation()
+    })
+}
+
+//#endregion
