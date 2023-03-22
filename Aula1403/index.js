@@ -85,6 +85,7 @@ function buildAccount(){
         if(fs.existsSync(`accounts/${accountName}.json`)){
             console.log(chalk.bgRed.black('Esta conta já existe!'))
             buildAccount(accountName) // recursividade, ou seja, chama a função dentro da própria função. Nesse caso, vai retornar pra função build
+            return 
         } 
         
         // polimorfia: ato que pode modificar o metodo mandando um parametro pra ele que exista no contexto geral.
@@ -105,4 +106,59 @@ function buildAccount(){
     })
 }
 
+//#endregion
+
+//#region Depositar na Conta
+
+function deposit(){ 
+    inquirer.prompt([
+        {
+            name: 'accountName',
+            message: 'Para qual conta irá o depósito?'
+        }
+    ]).then((answer) => {
+        const accountName = answer['accountName']
+        if(!checkAccount(accountName)){
+            return deposit()
+        }
+
+        inquirer.prompt([
+            {
+                name: 'amount',
+                message: 'Quanto você deseja depositar?'
+            }
+        ]).then((answer) => {  // promessa encadeada => árvore
+            const amount = answer['amount']
+            addAmount(accountName, amount)
+            console.log(chalk.bgYellow.green('Sucesso! Seu montante foi depositado.'))
+
+            setTimeout(() => { // espera 01 segundo e vai pro operation
+                operation()
+            }, 1000);
+
+        }) 
+    })
+
+}
+
+function checkAccount(accountName){
+    if(!fs.existsSync(`accounts/${accountName}.json`)){
+        console.log(chalk.bgRed.black('Esta conta não existe.'))
+        return false
+    }
+    return true
+}
+
+function getAccount(accountName){ //identifica a conta de adição de valor e aloca dentro do objeto e depois devolve para o servidor
+    const accountJSON = fs.readFileSync(`accounts/${accountName}.json`,{ //usa fs para trazer a conta dentro dessa constante
+        encoding: 'utf8', //padrão de linguagem que o json tá utilizando
+        flag:'r' //read => só quer ler o arquivo para não ter marcação
+   
+    })
+    return JSON.parse(accountJSON) //converte o que está dentro da constante para json para conseguir acessar  
+}
+
+function addAmount(accountName, amount){
+
+}
 //#endregion
