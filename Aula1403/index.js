@@ -36,10 +36,12 @@ function operation()
 
         else if(action === 'Consultar Saldo'){
             console.log('Consultando seu saldo...')
+            accountBalance()
         }
 
         else if(action === 'Depositar'){
             console.log('Depositando em sua conta...')
+            deposit()
         }
 
         else if(action === 'Sacar'){
@@ -159,6 +161,55 @@ function getAccount(accountName){ //identifica a conta de adição de valor e al
 }
 
 function addAmount(accountName, amount){
+    const accountData = getAccount(accountName)//armazena os dados que o get trouxe
 
+    if (!amount){ //ver se tem o valor
+
+        console.log(chalk.bgRed.black('O montante não é válido')) //ainda é recursividade pois retorna o amount que está no método depositar
+        return deposit()
+    }
+
+    accountData.balance = parseFloat(amount) + parseFloat(accountData.balance) //accountData é uma instancia
+
+    fs.writeFileSync(`accounts/${accountName}.json`, //escreve no arquivo
+    JSON.stringify(accountData),
+    function(err){
+        console.log(err)
+    })
+
+    console.log(chalk.green(`Depositamos: R$ ${amount} na conta ${accountName}.`))
 }
+//#endregion
+
+//#region Consultar Saldo
+
+function accountBalance(){
+    inquirer.prompt([{
+        name: 'accountName',
+        message: 'Qual conta deseja o saldo?'
+    }
+
+    ]).then((answer) =>{
+        const accountName = answer['accountName']
+
+        if(!checkAccount(accountName)){
+            return accountBalance()
+        }
+
+        const accountData = getAccount(accountName)
+
+        if(accountData.balance>0){
+            console.log(chalk.green(`Saldo: ${accountData.balance}`))
+        }
+
+        else{
+            console.log(chalk.red(`Saldo: ${accountData.balance}`))
+        }
+
+        setTimeout(() => {
+            operation()
+        }, 10000);
+    })
+}
+
 //#endregion
