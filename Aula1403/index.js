@@ -46,6 +46,7 @@ function operation()
 
         else if(action === 'Sacar'){
             console.log('Sacando de sua conta...')
+            withdraw()
         }
 
         else if(action === 'Sair'){
@@ -76,14 +77,18 @@ function buildAccount(){
         {
             name: 'accountName',
             message: 'Entre com o nome da conta:'
+
+            
         }
     ]).then((answer) => {
         const accountName = answer['accountName'] //sync porque a promiss é sincrona
-
+        
+        
         if(!fs.existsSync('accounts')){  //Verifica se não existe
             fs.mkdirSync('accounts')
         }
-    
+
+            
         if(fs.existsSync(`accounts/${accountName}.json`)){
             console.log(chalk.bgRed.black('Esta conta já existe!'))
             buildAccount(accountName) // recursividade, ou seja, chama a função dentro da própria função. Nesse caso, vai retornar pra função build
@@ -95,7 +100,7 @@ function buildAccount(){
         // função de erro
         fs.writeFileSync(
             `accounts/${accountName}.json`,
-            '{"balance":0}',
+            '{"balance":0, "limit": 1000}',
             function (err){
                 console.error(err)
             }
@@ -212,4 +217,75 @@ function accountBalance(){
     })
 }
 
+//#endregion
+
+//#region Sacar do Saldo
+function withdraw(){
+    inquirer.prompt([
+        {
+           name:'accountName',
+           message:'De qual conta deseja sacar?' 
+        }
+    ]).then((answer) => {
+        const accountName = answer['accountName']
+
+        if(!checkAccount(accountName)){
+            return withdraw()
+        }
+
+        inquirer.prompt([
+            {
+                name:'amount',
+                message:'Quanto deseja sacar?'
+            }
+        ]).then((answer) => {
+            const amount = answer['amount']
+
+           if( removeAmount(accountName, amount)){
+            console.log(chalk.bgRed.black(`Foi sacado R$ ${amount} da conta: ${accountName}`))
+            setTimeout(() => {
+                operation()
+            }, 3000);
+
+           }
+  
+        } )
+
+    })
+}
+function removeAmount(accountName, amount){
+    const accountData = getAccount(accountName)
+
+    if(!amount){
+        console.log(chalk.bgRed.black('Não há valor a sacar.'))
+        return withdraw()
+
+    }
+
+    if(accountData.balance < amount){
+        console.log(chalk.bgRed.black('Você irá entrar no cheque especial!'))
+    }
+
+    if((accountData.balance + accountData.limit) < amount){
+        console.log(chalk.red('Você não tem limite especial.'))
+        return
+    }
+    
+    else{
+        accountData.balance = parseFloat(accountData.balance) - parseFloat(amount)
+
+    fs.writeFileSync(
+        `accounts/${accountName}.json`,
+        JSON.stringify(accountData),
+        function (err){
+            console.log(err)
+        }
+    )
+
+    console.log(chalk.blue(`Você sacou: ${amount} da conta ${accountName}.`))
+    console.log(chalk.bgWhite.blue(`Seu saldo ficou: ${accountData.balance}`))
+
+    }
+
+}
 //#endregion
